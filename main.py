@@ -1,11 +1,15 @@
+import cgitb
 import sys
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import (QApplication, QInputDialog, QLineEdit,
-                             QMainWindow, QPushButton, QWidget)
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 from lib import Single_inverted_pendulum
 from res import Ui_Dialog
+
+cgitb.enable(format='text')
 
 
 class Unite():
@@ -67,31 +71,47 @@ class Unite():
             Ki=self.get_I(),
             Kd=self.get_D())
 
-        print("start")
+        # print("start")
         ui.pushButton.setText("   暂停")
 
     def __pause(self):
         self.pressed = False
 
-        print("pause")
+        # print("pause")
         ui.pushButton.setText("   继续")
 
     def __continue(self):
         self.pressed = True
 
-        print("continue")
+        # print("continue")
         ui.pushButton.setText("   暂停")
 
     def drawInit(self):
         grapView = ui.graphicsView
         scene = QtWidgets.QGraphicsScene()
+        width = 551
+        height = 551
         grapView.setScene(scene)
-        pendulum = QtGui.QPixmap()
-        pendulum.load("./res/pendulum.png")
-        scene.addItem(QtWidgets.QGraphicsPixmapItem(pendulum))
-        car = QtGui.QPixmap()
-        car.load("./res/car.png")
-        scene.addItem(QtWidgets.QGraphicsPixmapItem(car))
+        pendulum_w=10
+        pendulum_h=201
+        pendulum = QPixmap("./res/pendulum.png").scaled(pendulum_w, pendulum_h)
+        pendulum_item = QGraphicsPixmapItem(pendulum)
+        pendulum_item.setPos(QPointF(30, 20))
+        scene.addItem(pendulum_item)
+
+        car_w=70
+        car_h=46
+        car = QPixmap("./res/car.png").scaled(car_w, car_h)
+        car_item = QGraphicsPixmapItem(car)
+        car_item.setPos(QPointF(0, 200))
+        scene.addItem(car_item)
+
+        # pendulum = QtGui.QPixmap()
+        # pendulum.load("./res/pendulum.png")
+        # scene.addItem(QtWidgets.QGraphicsPixmapItem(pendulum))
+        # car = QtGui.QPixmap()
+        # car.load("./res/car.png")
+        # scene.addItem(QtWidgets.QGraphicsPixmapItem(car))
 
     def test(self):
         print(self.get_M())
