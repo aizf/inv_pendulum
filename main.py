@@ -92,19 +92,30 @@ class Unite():
         width = 551
         height = 551
         grapView.setScene(scene)
+
+        cross_bar_w = 551
+        cross_bar_h = 10
+        cross_bar = QPixmap("./res/cross_bar.png").scaled(cross_bar_w, cross_bar_h)
+        cross_bar_item = QGraphicsPixmapItem(cross_bar)
+        
+        scene.addItem(cross_bar_item)
+        cross_bar_item.setPos(QPointF(0, 200))
+
         pendulum_w=10
         pendulum_h=201
         pendulum = QPixmap("./res/pendulum.png").scaled(pendulum_w, pendulum_h)
         pendulum_item = QGraphicsPixmapItem(pendulum)
-        pendulum_item.setPos(QPointF(30, 20))
+        
         scene.addItem(pendulum_item)
+        pendulum_item.setPos(QPointF(30, 20))
 
         car_w=70
         car_h=46
         car = QPixmap("./res/car.png").scaled(car_w, car_h)
         car_item = QGraphicsPixmapItem(car)
-        car_item.setPos(QPointF(0, 200))
+        
         scene.addItem(car_item)
+        car_item.setPos(QPointF(0, 200))
 
         # pendulum = QtGui.QPixmap()
         # pendulum.load("./res/pendulum.png")
