@@ -1,2 +1,5 @@
 test.py
-.vscode/vs/__pycache__/
+
+.vscode/
+vs/
+__pycache__/
