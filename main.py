@@ -12,12 +12,55 @@ from res import Ui_Dialog
 cgitb.enable(format='text')
 
 
+class Animation(QObject):
+    def __init__(self, item):
+        super().__init__()
+        self.item = item
+        self.anim_move = QPropertyAnimation()
+        self.anim_rotate = QPropertyAnimation()
+
+    def move(self, p0, p1, dur=1000):  # p0:QPointF(250, 20)
+        self.anim_move = QPropertyAnimation(self, b'pos')
+        self.anim_move.setDuration(dur)
+        self.anim_move.setStartValue(p0)
+        self.anim_move.setEndValue(p1)
+
+    def rotate(self, a0, a1, dur=1000):  # a:360
+        self.anim_rotate = QPropertyAnimation(self, b'rotation')
+        self.anim_rotate.setDuration(dur)
+        self.anim_rotate.setStartValue(QPointF(a0, 1))
+        self.anim_rotate.setEndValue(QPointF(a1, 1))
+
+    def start(self, isM=False, isR=False):
+        if isM:
+            self.anim_move.start()
+        if isR:
+            self.anim_rotate.start()
+
+    def __set_pos(self, pos):
+        self.item.setPos(pos)  # 位置
+
+    def __set_rotation(self, angle):
+        self.item.setRotation(angle.x())  # 旋转度数
+
+    pos = pyqtProperty(QPointF, fset=__set_pos)
+    rotation = pyqtProperty(QPointF, fset=__set_rotation)
+
+
 class Unite():
     def __init__(self, ui):
         self.ui = ui
+        self.ctrl = Single_inverted_pendulum(self.fun_timer)
+
+        self.cross_bar_item = QGraphicsPixmapItem()
+        self.pendulum_item = QGraphicsPixmapItem()
+        self.car_item = QGraphicsPixmapItem()
+        self.drawInit()
+        self.pendulum_anim = Animation(self.pendulum_item)
+        self.car_anim = Animation(self.car_item)
+
         self.reseted = True
         self.pressed = False
-        self.ctrl = Single_inverted_pendulum(self.fun_timer)
 
     def get_M(self):
         return eval(self.ui.lineEdit.text())
@@ -70,6 +113,8 @@ class Unite():
             Kp=self.get_P(),
             Ki=self.get_I(),
             Kd=self.get_D())
+        # self.anim.start()
+        self.animation()
 
         # print("start")
         ui.pushButton.setText("   暂停")
@@ -109,6 +154,7 @@ class Unite():
             plt.show()
             car.stop()
 
+    # 动画部分
     def drawInit(self):
         grapView = ui.graphicsView
         scene = QtWidgets.QGraphicsScene()
@@ -118,44 +164,36 @@ class Unite():
 
         cross_bar_w = 551
         cross_bar_h = 10
-        cross_bar = QPixmap(
-            "./res/cross_bar.png").scaled(cross_bar_w, cross_bar_h)
-        cross_bar_item = QGraphicsPixmapItem(cross_bar)
-
-        scene.addItem(cross_bar_item)
-        cross_bar_item.setPos(QPointF(0, 200))
+        cross_bar = QPixmap("./res/cross_bar.png").scaled(
+            cross_bar_w, cross_bar_h)
+        self.cross_bar_item = QGraphicsPixmapItem(cross_bar)  # cross_bar
+        scene.addItem(self.cross_bar_item)
+        self.cross_bar_item.setPos(QPointF(0, 200))
 
         pendulum_w = 10
         pendulum_h = 201
-        pendulum = QPixmap("./res/pendulum.png").scaled(pendulum_w, pendulum_h)
-        pendulum_item = QGraphicsPixmapItem(pendulum)
-
-        scene.addItem(pendulum_item)
-        pendulum_item.setPos(QPointF(250, 20))
+        self.pendulum = QPixmap("./res/pendulum.png").scaled(
+            pendulum_w, pendulum_h)
+        self.pendulum_item = QGraphicsPixmapItem(self.pendulum)  # pendulum
+        scene.addItem(self.pendulum_item)
+        self.pendulum_item.setPos(QPointF(250, 20))
+        self.pendulum_item.setTransformOriginPoint(pendulum_w / 2,
+                                                   pendulum_h)  # 设置旋转中心
 
         car_w = 70
         car_h = 46
         car = QPixmap("./res/car.png").scaled(car_w, car_h)
-        car_item = QGraphicsPixmapItem(car)
+        self.car_item = QGraphicsPixmapItem(car)  # car
+        scene.addItem(self.car_item)
+        self.car_item.setPos(QPointF(220, 180))
 
-        scene.addItem(car_item)
-        car_item.setPos(QPointF(220, 180))
+    def animation(self):
+        self.pendulum_anim.move(QPointF(0, 180), QPointF(220, 180))
+        self.pendulum_anim.rotate(0, 360)
+        self.pendulum_anim.start(isM=True,isR=True)
 
-        # pendulum = QtGui.QPixmap()
-        # pendulum.load("./res/pendulum.png")
-        # scene.addItem(QtWidgets.QGraphicsPixmapItem(pendulum))
-        # car = QtGui.QPixmap()
-        # car.load("./res/car.png")
-        # scene.addItem(QtWidgets.QGraphicsPixmapItem(car))
-
-    def test(self):
-        print(self.get_M())
-        print(self.get_m())
-        print(self.get_L())
-        print(self.get_u())
-        print(self.get_P())
-        print(self.get_I())
-        print(self.get_D())
+    def __test(self):
+        pass
 
 
 if __name__ == '__main__':
@@ -166,7 +204,6 @@ if __name__ == '__main__':
     unite = Unite(ui)
     ui.pushButton.clicked.connect(unite.firstButton)
     ui.pushButton_2.clicked.connect(unite.reset)
-    unite.drawInit()
 
     mainWindow.show()
     sys.exit(app.exec_())

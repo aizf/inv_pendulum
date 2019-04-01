@@ -518,6 +518,8 @@ class Ui_Dialog(object):
         self.lineEdit_7.setObjectName("lineEdit_7")
         self.graphicsView = QtWidgets.QGraphicsView(Dialog)
         self.graphicsView.setGeometry(QtCore.QRect(65, 121, 551, 551))
+        self.graphicsView.setMinimumSize(QtCore.QSize(551, 551))
+        self.graphicsView.setMaximumSize(QtCore.QSize(551, 551))
         self.graphicsView.setStyleSheet("border-image: url();\n"
 "border:0px;\n"
 "background:rgb(0,0,0,0);\n"
@@ -567,4 +569,4 @@ class Ui_Dialog(object):
         self.lineEdit_6.setText(_translate("Dialog", "1"))
         self.lineEdit_7.setText(_translate("Dialog", "30"))
 
-from . import qrc
+import a_rc
