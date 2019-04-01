@@ -17,7 +17,7 @@ class Unite():
         self.ui = ui
         self.reseted = True
         self.pressed = False
-        self.ctrl = Single_inverted_pendulum()
+        self.ctrl = Single_inverted_pendulum(self.fun_timer)
 
     def get_M(self):
         return eval(self.ui.lineEdit.text())
@@ -86,6 +86,29 @@ class Unite():
         # print("continue")
         ui.pushButton.setText("   暂停")
 
+    def fun_timer():
+        # print('hello timer')   #打印输出
+        global result1
+        global result2
+        result1 = []
+        result2 = []
+        result = car.get_ang_dis()
+        result1.append(result[0])
+        result2.append(result[1])
+        print(car.t_index)
+        if (len(result2) > 400):
+            # plot
+            print('8s采样实际耗时：', (clock() - start))
+            t = np.linspace(
+                0, len(result2) * 0.02, len(result2), endpoint=False)
+            plt.figure()
+            plt.subplot(2, 1, 1)
+            plt.plot(t, result1)
+            plt.subplot(2, 1, 2)
+            plt.plot(t, result2)
+            plt.show()
+            car.stop()
+
     def drawInit(self):
         grapView = ui.graphicsView
         scene = QtWidgets.QGraphicsScene()
@@ -95,25 +118,26 @@ class Unite():
 
         cross_bar_w = 551
         cross_bar_h = 10
-        cross_bar = QPixmap("./res/cross_bar.png").scaled(cross_bar_w, cross_bar_h)
+        cross_bar = QPixmap(
+            "./res/cross_bar.png").scaled(cross_bar_w, cross_bar_h)
         cross_bar_item = QGraphicsPixmapItem(cross_bar)
-        
+
         scene.addItem(cross_bar_item)
         cross_bar_item.setPos(QPointF(0, 200))
 
-        pendulum_w=10
-        pendulum_h=201
+        pendulum_w = 10
+        pendulum_h = 201
         pendulum = QPixmap("./res/pendulum.png").scaled(pendulum_w, pendulum_h)
         pendulum_item = QGraphicsPixmapItem(pendulum)
-        
+
         scene.addItem(pendulum_item)
         pendulum_item.setPos(QPointF(250, 20))
 
-        car_w=70
-        car_h=46
+        car_w = 70
+        car_h = 46
         car = QPixmap("./res/car.png").scaled(car_w, car_h)
         car_item = QGraphicsPixmapItem(car)
-        
+
         scene.addItem(car_item)
         car_item.setPos(QPointF(220, 180))
 
@@ -135,7 +159,6 @@ class Unite():
 
 
 if __name__ == '__main__':
-
     app = QApplication(sys.argv)
     mainWindow = QMainWindow()
     ui = Ui_Dialog()
