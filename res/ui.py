@@ -520,11 +520,20 @@ class Ui_Dialog(object):
         self.graphicsView.setGeometry(QtCore.QRect(65, 121, 551, 551))
         self.graphicsView.setMinimumSize(QtCore.QSize(551, 551))
         self.graphicsView.setMaximumSize(QtCore.QSize(551, 551))
+        self.graphicsView.setMouseTracking(True)
         self.graphicsView.setStyleSheet("border-image: url();\n"
 "border:0px;\n"
 "background:rgb(0,0,0,0);\n"
 "")
         self.graphicsView.setObjectName("graphicsView")
+        self.label_11 = QtWidgets.QLabel(Dialog)
+        self.label_11.setGeometry(QtCore.QRect(70, 120, 91, 21))
+        self.label_11.setMouseTracking(True)
+        self.label_11.setStyleSheet("border-image: url();\n"
+"border:0px;\n"
+"background:rgb(0,0,0,0);\n"
+"font: 30 10pt \"微软雅黑\";")
+        self.label_11.setObjectName("label_11")
         self.label_3.raise_()
         self.label.raise_()
         self.label_2.raise_()
@@ -545,6 +554,7 @@ class Ui_Dialog(object):
         self.lineEdit_6.raise_()
         self.lineEdit_7.raise_()
         self.graphicsView.raise_()
+        self.label_11.raise_()
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -568,5 +578,6 @@ class Ui_Dialog(object):
         self.lineEdit_5.setText(_translate("Dialog", "100"))
         self.lineEdit_6.setText(_translate("Dialog", "1"))
         self.lineEdit_7.setText(_translate("Dialog", "30"))
+        # self.label_11.setText(_translate("Dialog", "x: 0,  y: 0"))
 
-import a_rc
+from . import a_rc

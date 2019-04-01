@@ -19,13 +19,13 @@ class Animation(QObject):
         self.anim_move = QPropertyAnimation()
         self.anim_rotate = QPropertyAnimation()
 
-    def move(self, p0, p1, dur=1000):  # p0:QPointF(250, 20)
+    def move(self, p0, p1, dur=5000):  # p0:QPointF(250, 20)
         self.anim_move = QPropertyAnimation(self, b'pos')
         self.anim_move.setDuration(dur)
         self.anim_move.setStartValue(p0)
         self.anim_move.setEndValue(p1)
 
-    def rotate(self, a0, a1, dur=1000):  # a:360
+    def rotate(self, a0, a1, dur=5000):  # a:360
         self.anim_rotate = QPropertyAnimation(self, b'rotation')
         self.anim_rotate.setDuration(dur)
         self.anim_rotate.setStartValue(QPointF(a0, 1))
@@ -161,6 +161,7 @@ class Unite():
         width = 551
         height = 551
         grapView.setScene(scene)
+        scene.setSceneRect(0, 0, width, height)
 
         cross_bar_w = 551
         cross_bar_h = 10
@@ -168,7 +169,18 @@ class Unite():
             cross_bar_w, cross_bar_h)
         self.cross_bar_item = QGraphicsPixmapItem(cross_bar)  # cross_bar
         scene.addItem(self.cross_bar_item)
-        self.cross_bar_item.setPos(QPointF(0, 200))
+        self.cross_bar_item.setPos(QPointF(0, height * 2 / 3))
+        self.cross_bar_item.setZValue(0)
+
+        car_w = 70
+        car_h = 46
+        car = QPixmap("./res/car.png").scaled(car_w, car_h)
+        self.car_item = QGraphicsPixmapItem(car)  # car
+        scene.addItem(self.car_item)
+        self.car_item.setPos(
+            QPointF(width / 2 - car_w / 2,
+                    height * 2 / 3 - car_h / 2 + cross_bar_h / 2))
+        self.car_item.setZValue(2)
 
         pendulum_w = 10
         pendulum_h = 201
@@ -176,21 +188,19 @@ class Unite():
             pendulum_w, pendulum_h)
         self.pendulum_item = QGraphicsPixmapItem(self.pendulum)  # pendulum
         scene.addItem(self.pendulum_item)
-        self.pendulum_item.setPos(QPointF(250, 20))
+        self.pendulum_item.setPos(
+            QPointF(width / 2 - pendulum_w / 2,
+                    self.car_item.y() - pendulum_h))
         self.pendulum_item.setTransformOriginPoint(pendulum_w / 2,
                                                    pendulum_h)  # 设置旋转中心
-
-        car_w = 70
-        car_h = 46
-        car = QPixmap("./res/car.png").scaled(car_w, car_h)
-        self.car_item = QGraphicsPixmapItem(car)  # car
-        scene.addItem(self.car_item)
-        self.car_item.setPos(QPointF(220, 180))
+        self.pendulum_item.setZValue(1)
 
     def animation(self):
-        self.pendulum_anim.move(QPointF(0, 180), QPointF(220, 180))
-        self.pendulum_anim.rotate(0, 360)
-        self.pendulum_anim.start(isM=True,isR=True)
+        self.pendulum_anim.move(
+            QPointF(self.pendulum_item.x(), self.pendulum_item.y()),
+            QPointF(self.pendulum_item.x(), self.pendulum_item.y()))
+        self.pendulum_anim.rotate(0, 200)
+        self.pendulum_anim.start(isM=True, isR=True)
 
     def __test(self):
         pass
