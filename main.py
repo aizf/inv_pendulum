@@ -107,7 +107,7 @@ class Unite():
         pendulum_item = QGraphicsPixmapItem(pendulum)
         
         scene.addItem(pendulum_item)
-        pendulum_item.setPos(QPointF(30, 20))
+        pendulum_item.setPos(QPointF(250, 20))
 
         car_w=70
         car_h=46
@@ -115,7 +115,7 @@ class Unite():
         car_item = QGraphicsPixmapItem(car)
         
         scene.addItem(car_item)
-        car_item.setPos(QPointF(0, 200))
+        car_item.setPos(QPointF(220, 180))
 
         # pendulum = QtGui.QPixmap()
         # pendulum.load("./res/pendulum.png")

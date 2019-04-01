@@ -1,22 +1,28 @@
 import math
 import threading
-from time import clock
+from time import clock, sleep
 
 import numpy as np
 from control.matlab import *
 from matplotlib import pyplot as plt
-from scipy import signal
 
 
-class Single_inverted_pendulum():
-    def __init__(self):
+class Single_inverted_pendulum(threading.Thread):
+    def __init__(self, fn):
+        super(Single_inverted_pendulum, self).__init__()
+        self.__flag = threading.Event()  # 用于暂停线程的标识
+        self.__flag.set()  # 设置为True
+        self.__running = threading.Event()  # 用于停止线程的标识
+        self.__running.set()  # 将running设置为True
+        self.fn = fn
+        self.clock_start = clock()
         self.last_state = [0, 0]  #迭代计算的关键
-        self.stop_flag = False  #暂停的标志
+
         self.t_index = 0  #自身维护的输出点的计数
         self.dt = 0.02  #采样间隔
         self.input_pulse = self.get_pulse_sampling(
             0, 1, self.dt, during=0.02)  #设置系统的pulse输入，就是类似于一个瞬间冲击
-        self.set()  # 设置系统参数
+        self.set()  #设置系统参数
 
     def get_pulse_sampling(self, start, stop, step, during=0.02):
         '''
@@ -87,19 +93,33 @@ class Single_inverted_pendulum():
         self.t_index += 1
         return angle[0][0], dis[0][0]
 
-    def stop(self):
-        self.stop_flag = True
+    def run(self):
+        while self.__running.isSet():
+            self.__flag.wait()  # 为True时立即返回, 为False时阻塞直到内部的标识位为True后返回
+
+            #决定何时启动本次绘制
+            c = clock() - self.clock_start
+            if c < 0.02:
+                #决定先睡一会
+                sleep(0.02 - c)
+            self.clock_start = clock()
+            #调用外部的程序
+            self.fn()
+
+    def pause(self):
+        self.__flag.clear()  # 设置为False, 让线程阻塞
 
     def resume(self):
+        self.__flag.set()  # 设置为True, 让线程停止阻塞
+        self.set()  # 前端需要传递参数，并做非0等判断
+
+    def stop(self):
         '''
-        先传递参数,然后启动timer
+        程序退出时候调用
         :return:
         '''
-        self.set()  #前端需要传递参数，并做非0等判断
-        self.stop_flag = False
-        global timer  # 定义变量
-        timer = threading.Timer(2, fun_timer)  # 数字是时间
-        timer.start()
+        self.__flag.set()  # 将线程从暂停状态恢复, 如何已经暂停的话
+        self.__running.clear()  # 设置为False
 
     def reset(self):
         '''
@@ -108,19 +128,26 @@ class Single_inverted_pendulum():
         '''
         self.t_index = 0
         self.last_state = [0, 0]
-        self.stop_flag = True
+        self.pause()
 
 
 if __name__ == "__main__":
+    global result1
+    global result2
+    result1 = []
+    result2 = []
 
     def fun_timer():
         # print('hello timer')   #打印输出
         global result1
         global result2
-
+        result = car.get_ang_dis()
+        result1.append(result[0])
+        result2.append(result[1])
         print(car.t_index)
         if (len(result2) > 400):
             #plot
+            print('8s采样实际耗时：', (clock() - start))
             t = np.linspace(
                 0, len(result2) * 0.02, len(result2), endpoint=False)
             plt.figure()
@@ -129,19 +156,8 @@ if __name__ == "__main__":
             plt.subplot(2, 1, 2)
             plt.plot(t, result2)
             plt.show()
-        else:
-            global timer  # 定义变量
-            timer = threading.Timer(0.02, fun_timer)  # 60秒调用一次函数
-            # 定时器构造函数主要有2个参数，第一个参数为时间，第二个参数为函数
-            if not car.stop_flag:
-                timer.start()  # 启用定时器
-            result = car.get_ang_dis()
-            result1.append(result[0])
-            result2.append(result[1])
+            car.stop()
 
-    result1 = []
-    result2 = []
-    car = Single_inverted_pendulum()
-    if not car.stop_flag:
-        timer = threading.Timer(1, fun_timer)  # 首次启动
-        timer.start()
+    car = Single_inverted_pendulum(fun_timer)
+    start = clock()
+    car.start()
