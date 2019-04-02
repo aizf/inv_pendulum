@@ -236,11 +236,7 @@ class Unite():
         print(threading.enumerate())
 
     def animation(self, x, a):
-        print("animation")
-        self.pendulum_item.setPos(x + self.pendulum_x_offset,
-                                  self.pendulum_item.y())
-        self.pendulum_item.setRotation(a)
-        self.car_item.setPos(x + self.car_x_offset, self.car_item.y())
+        
 
 
     def __test(self):
