@@ -10,4 +10,4 @@ from lib import Single_inverted_pendulum
 from res import Ui_Dialog
 
 cgitb.enable(format='text')
-print("x: {0},  y: {1}".format(1, 2))
+print(-123.12312%2)

@@ -10,7 +10,7 @@ from lib import Single_inverted_pendulum
 from res import Ui_Dialog
 import threading
 import time
-
+import math
 cgitb.enable(format='text')
 
 
@@ -60,9 +60,12 @@ class Unite(QObject):
     def __init__(self, ui):
         super().__init__()
         self.ui = ui
+        self.lastX=551/2
+        self.lastA=0
+        self.count=0
         self.ctrl = Single_inverted_pendulum(self.fun_timer)
         self.timer = QTimer(self) #初始化一个定时器
-        self.timer.start(20) #设置计时间隔并启动
+        # self.timer.start(20) #设置计时间隔并启动
         self.timer.timeout.connect(self.fun_timer) #计时结束调用operate()方法
 
         self.grapView=ui.graphicsView
@@ -106,27 +109,22 @@ class Unite(QObject):
     def reset(self):
         self.reseted = True
         self.ctrl.reset()
-
-        # self.grapView.viewport().repaint()
-        # self.grapView.viewport().update()
-        # # self.grapView.updateScene()
-        # self.grapView.update()
-        # self.grapView.repaint()
-
-        self.pendulum_item.setPos(self.pendulum_item.x()+10,
-                                  self.pendulum_item.y())
-        # self.pendulum_item.setRotation(self.pendulum_item.rotation()+10)
-        self.car_item.setPos(self.car_item.x()+10, self.car_item.y())
-
+        self.timer.stop()
+        self.lastX=551/2
+        self.lastA=0
+        self.count=0
+        width = 551
+        self.animation(width / 2, 0)
+        self.ctrl.set(
+            mCart=self.get_M(),
+            mPend=self.get_m(),
+            L=self.get_L(),
+            b=self.get_u(),
+            Kp=self.get_P(),
+            Ki=self.get_I(),
+            Kd=self.get_D())
         ui.pushButton.setText("   开始")
-        self.ui.lineEdit.setText("0.5")
-        self.ui.lineEdit_2.setText("0.2")
-        self.ui.lineEdit_3.setText("0.6")
-        self.ui.lineEdit_4.setText("0.1")
-        self.ui.lineEdit_5.setText("100")
-        self.ui.lineEdit_6.setText("1")
-        self.ui.lineEdit_7.setText("30")
-        print(threading.enumerate())
+
 
     def firstButton(self):
         if self.reseted:
@@ -137,6 +135,7 @@ class Unite(QObject):
             return self.__continue()
 
     def __start(self):
+        self.timer.start(20)
         self.reseted = False
         self.pressed = True
         self.ctrl.set(
@@ -154,11 +153,12 @@ class Unite(QObject):
     def __pause(self):
         self.pressed = False
 
-        # print("pause")
+        self.timer.stop()
     
         ui.pushButton.setText("   继续")
 
     def __continue(self):
+        self.timer.start(20)
         self.pressed = True
 
         # print("continue")
@@ -217,31 +217,32 @@ class Unite(QObject):
         self.pendulum_item.setZValue(100)
 
     def fun_timer(self):
-        # pass
         width = 551
-        height = 551
         result = self.ctrl.get_ang_dis()
 
         self.animation(result[1]*100 + width / 2, 0-result[0])
 
     def animation(self, x, a):
-        print("animation")
+        # print(x,a)
+        # if abs(self.lastX-x)<1 and abs(self.lastA-a)<0.001 and self.count>10 and abs(a)<0.01:
+        #     self.timer.stop()
+        #     return
+        # self.count+=1
+        # self.lastX=x
+        # self.lastA=a
+
+        width = 551
+        # print("animation")
+        if x<0:
+            x=width-(-x)%width
+        elif x>width:
+            x%=width
+        # print(x)
         self.pendulum_item.setPos(x + self.pendulum_x_offset,
                                   self.pendulum_item.y())
         self.pendulum_item.setRotation(a)
         self.car_item.setPos(x + self.car_x_offset, self.car_item.y())
 
-
-    def __test(self):
-        pass
-
-# def test(unite):
-#     for x in range(20):
-#         # unite.pendulum_item.setPos(x+10,
-#         #                             158.33333333333331)
-#         unite.pendulum_item.setRotation(x)
-#         # unite.car_item.setPos(x+10, 349.3333333333333)
-#         time.sleep(0.5)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
