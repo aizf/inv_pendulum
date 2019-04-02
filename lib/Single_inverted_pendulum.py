@@ -115,7 +115,7 @@ class Single_inverted_pendulum(threading.Thread):
         '''
         self.t_index = 0
         self.last_state=[0,0]
-        self.pause()
+        # self.pause()
 if __name__=="__main__":
     global result1
     global result2

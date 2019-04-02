@@ -14,52 +14,56 @@ import time
 cgitb.enable(format='text')
 
 
-class Animation(QObject):
-    def __init__(self, item):
-        super().__init__()
-        self.item = item
-        self.dur = 1
-        self.anim_move = QPropertyAnimation()
-        self.anim_rotate = QPropertyAnimation()
+# class Animation(QObject):
+#     def __init__(self, item):
+#         super().__init__()
+#         self.item = item
+#         self.dur = 1
+#         self.anim_move = QPropertyAnimation()
+#         self.anim_rotate = QPropertyAnimation()
 
-    def move_A(self, x, y):  # p:QPointF(250, 20)
-        self.anim_move = QPropertyAnimation(self, b'pos')
-        self.anim_move.setDuration(self.dur)
-        self.anim_move.setStartValue(QPointF(self.item.x(), self.item.y()))
-        self.anim_move.setEndValue(QPointF(x, y))
+#     def move_A(self, x, y):  # p:QPointF(250, 20)
+#         self.anim_move = QPropertyAnimation(self, b'pos')
+#         self.anim_move.setDuration(self.dur)
+#         self.anim_move.setStartValue(QPointF(self.item.x(), self.item.y()))
+#         self.anim_move.setEndValue(QPointF(x, y))
 
-    def rotate_A(self, a):  # a:360
-        self.anim_rotate = QPropertyAnimation(self, b'rotation')
-        self.anim_rotate.setDuration(self.dur)
-        self.anim_rotate.setStartValue(QPointF(self.item.rotation(), 1))
-        self.anim_rotate.setEndValue(QPointF(a, 1))
+#     def rotate_A(self, a):  # a:360
+#         self.anim_rotate = QPropertyAnimation(self, b'rotation')
+#         self.anim_rotate.setDuration(self.dur)
+#         self.anim_rotate.setStartValue(QPointF(self.item.rotation(), 1))
+#         self.anim_rotate.setEndValue(QPointF(a, 1))
 
-    def start_A(self, isM=False, isR=False):
-        if isM:
-            self.anim_move.start()
-        if isR:
-            self.anim_rotate.start()
+#     def start_A(self, isM=False, isR=False):
+#         if isM:
+#             self.anim_move.start()
+#         if isR:
+#             self.anim_rotate.start()
 
-    def __set_pos(self, pos):
-        self.item.setPos(pos)  # 位置
+#     def __set_pos(self, pos):
+#         self.item.setPos(pos)  # 位置
 
-    def __set_rotation(self, angle):
-        self.item.setRotation(angle.x())  # 旋转度数
+#     def __set_rotation(self, angle):
+#         self.item.setRotation(angle.x())  # 旋转度数
 
-    def set_pos(self, x, y):
-        self.item.setPos(QPointF(x, y))  # 位置
+#     def set_pos(self, x, y):
+#         self.item.setPos(QPointF(x, y))  # 位置
 
-    def set_rotation(self, a):
-        self.item.setRotation(a)  # 旋转度数
+#     def set_rotation(self, a):
+#         self.item.setRotation(a)  # 旋转度数
 
-    pos = pyqtProperty(QPointF, fset=set_pos)
-    rotation = pyqtProperty(QPointF, fset=set_rotation)
+#     pos = pyqtProperty(QPointF, fset=set_pos)
+#     rotation = pyqtProperty(QPointF, fset=set_rotation)
 
 
-class Unite():
+class Unite(QObject):
     def __init__(self, ui):
+        super().__init__()
         self.ui = ui
         self.ctrl = Single_inverted_pendulum(self.fun_timer)
+        self.timer = QTimer(self) #初始化一个定时器
+        self.timer.start(20) #设置计时间隔并启动
+        self.timer.timeout.connect(self.fun_timer) #计时结束调用operate()方法
 
         self.grapView=ui.graphicsView
         self.scene = QtWidgets.QGraphicsScene()
@@ -67,8 +71,6 @@ class Unite():
         self.pendulum_item = QGraphicsPixmapItem()
         self.car_item = QGraphicsPixmapItem()
         self.drawInit()
-        self.pendulum_anim = Animation(self.pendulum_item)
-        self.car_anim = Animation(self.car_item)
 
         self.pendulum_x_offset
         self.pendulum_y_offset
@@ -77,9 +79,8 @@ class Unite():
 
         self.reseted = True
         self.pressed = False
-        self.ctrl.setDaemon(True)
-        self.ctrl.start()
-        self.ctrl.pause()
+       
+        
 
     def get_M(self):
         return eval(self.ui.lineEdit.text())
@@ -105,14 +106,12 @@ class Unite():
     def reset(self):
         self.reseted = True
         self.ctrl.reset()
-        self.ctrl.pause()
-        # self.ctrl.stop()
 
-        self.grapView.viewport().repaint()
-        self.grapView.viewport().update()
-        # self.grapView.updateScene()
-        self.grapView.update()
-        self.grapView.repaint()
+        # self.grapView.viewport().repaint()
+        # self.grapView.viewport().update()
+        # # self.grapView.updateScene()
+        # self.grapView.update()
+        # self.grapView.repaint()
 
         self.pendulum_item.setPos(self.pendulum_item.x()+10,
                                   self.pendulum_item.y())
@@ -148,7 +147,6 @@ class Unite():
             Kp=self.get_P(),
             Ki=self.get_I(),
             Kd=self.get_D())
-        self.ctrl.resume()
 
         # print("start")
         ui.pushButton.setText("   暂停")
@@ -157,7 +155,7 @@ class Unite():
         self.pressed = False
 
         # print("pause")
-        self.ctrl.pause()
+    
         ui.pushButton.setText("   继续")
 
     def __continue(self):
@@ -172,7 +170,7 @@ class Unite():
             Kp=self.get_P(),
             Ki=self.get_I(),
             Kd=self.get_D())
-        self.ctrl.resume()
+    
         ui.pushButton.setText("   暂停")
 
     # 动画部分
@@ -223,17 +221,8 @@ class Unite():
         width = 551
         height = 551
         result = self.ctrl.get_ang_dis()
-        # t= threading.Thread(target=self.animation,args=(result[1] + width / 2, result[0]))
-        # t.start()
-        # t.join()
-        x=result[1] + width / 2
-        a=result[0]
-        # self.pendulum_item.setPos(x + self.pendulum_x_offset,
-        #                           self.pendulum_item.y())
-        self.pendulum_item.setRotation(a)
-        # self.car_item.setPos(x + self.car_x_offset, self.car_item.y())
-        # self.animation(result[1] + width / 2, result[0])
-        print(threading.enumerate())
+
+        self.animation(result[1]*100 + width / 2, 0-result[0])
 
     def animation(self, x, a):
         print("animation")
@@ -263,6 +252,8 @@ if __name__ == '__main__':
     ui.pushButton.clicked.connect(unite.firstButton)
     ui.pushButton_2.clicked.connect(unite.reset)
     mainWindow.show()
+
+    # QTimer
 
     # t= threading.Thread(target=mainWindow.show,args=())#创建线程
     # t.setDaemon(True)
