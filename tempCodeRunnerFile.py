@@ -15,7 +15,6 @@ cgitb.enable(format='text')
 class Animation(QObject):
     def __init__(self, item):
         super().__init__()
-        
         self.item = item
         self.dur = 1000
         self.anim_move = QPropertyAnimation()
@@ -51,8 +50,6 @@ class Animation(QObject):
 
 class Unite():
     def __init__(self, ui):
-        self.ang=0
-        self.dis=0
         self.ui = ui
         self.ctrl = Single_inverted_pendulum(self.fun_timer)
 
@@ -70,8 +67,6 @@ class Unite():
 
         self.reseted = True
         self.pressed = False
-        self.ctrl.start()
-        self.ctrl.pause()
 
     def get_M(self):
         return eval(self.ui.lineEdit.text())
@@ -96,8 +91,6 @@ class Unite():
 
     def reset(self):
         self.reseted = True
-        self.ctrl.reset()
-        self.ctrl.pause()
         ui.pushButton.setText("   开始")
         self.ui.lineEdit.setText("0.5")
         self.ui.lineEdit_2.setText("0.2")
@@ -126,7 +119,8 @@ class Unite():
             Kp=self.get_P(),
             Ki=self.get_I(),
             Kd=self.get_D())
-        self.ctrl.resume()
+        # self.anim.start()
+        self.animation()
 
         # print("start")
         ui.pushButton.setText("   暂停")
@@ -135,23 +129,36 @@ class Unite():
         self.pressed = False
 
         # print("pause")
-        self.ctrl.pause()
         ui.pushButton.setText("   继续")
 
     def __continue(self):
         self.pressed = True
 
         # print("continue")
-        self.ctrl.set(
-            mCart=self.get_M(),
-            mPend=self.get_m(),
-            L=self.get_L(),
-            b=self.get_u(),
-            Kp=self.get_P(),
-            Ki=self.get_I(),
-            Kd=self.get_D())
-        self.ctrl.resume()
         ui.pushButton.setText("   暂停")
+
+    def fun_timer():
+        # print('hello timer')   #打印输出
+        global result1
+        global result2
+        result1 = []
+        result2 = []
+        result = car.get_ang_dis()
+        result1.append(result[0])
+        result2.append(result[1])
+        print(car.t_index)
+        if (len(result2) > 400):
+            # plot
+            print('8s采样实际耗时：', (clock() - start))
+            t = np.linspace(
+                0, len(result2) * 0.02, len(result2), endpoint=False)
+            plt.figure()
+            plt.subplot(2, 1, 1)
+            plt.plot(t, result1)
+            plt.subplot(2, 1, 2)
+            plt.plot(t, result2)
+            plt.show()
+            car.stop()
 
     # 动画部分
     def drawInit(self):
@@ -198,25 +205,14 @@ class Unite():
                                                    pendulum_h)  # 设置旋转中心
         self.pendulum_item.setZValue(1)
 
-    def fun_timer(self):
-        self.ang+=1
-        self.dis+=0.1
-        # result=self.ctrl.get_ang_dis()
-        # print(result[1],result[0])
-        # self.animation(result[1],result[0])
-        self.animation(self.dis,self.ang)
+    def animation(self):
+        self.pendulum_anim.dur=1000
+        self.pendulum_anim.move((0, self.pendulum_item.y())
+        self.pendulum_anim.rotate(200)
+        self.pendulum_anim.start(isM=True, isR=True)
 
-
-    def animation(self,x,a):
-        print("animation")
-        
-        self.pendulum_anim.dur=1
-        self.pendulum_anim.move(x+self.pendulum_x_offset, self.pendulum_item.y())
-        # self.pendulum_anim.rotate(a)
-        self.pendulum_anim.start(isM=True)
-
-        self.car_anim.dur = 2
-        self.car_anim.move(x+self.car_x_offset, self.car_item.y())
+        self.car_anim.dur = 1000
+        self.car_anim.move(0, self.car_item.y())
         self.car_anim.start(isM=True)
 
     def __test(self):
@@ -232,12 +228,5 @@ if __name__ == '__main__':
     ui.pushButton.clicked.connect(unite.firstButton)
     ui.pushButton_2.clicked.connect(unite.reset)
 
-
-
     mainWindow.show()
-    # def fun_timer():
-    #     result = car.get_ang_dis()
-       
-    
-
     sys.exit(app.exec_())
