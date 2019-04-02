@@ -61,6 +61,8 @@ class Unite():
         self.ui = ui
         self.ctrl = Single_inverted_pendulum(self.fun_timer)
 
+        self.grapView=ui.graphicsView
+        self.scene = QtWidgets.QGraphicsScene()
         self.cross_bar_item = QGraphicsPixmapItem()
         self.pendulum_item = QGraphicsPixmapItem()
         self.car_item = QGraphicsPixmapItem()
@@ -102,17 +104,20 @@ class Unite():
 
     def reset(self):
         self.reseted = True
-        # self.ctrl.reset()
-        # self.ctrl.pause()
-        self.ctrl.stop()
+        self.ctrl.reset()
+        self.ctrl.pause()
+        # self.ctrl.stop()
 
-        self.pendulum_item.setPos(self.pendulum_item.x(),
+        self.grapView.viewport().repaint()
+        self.grapView.viewport().update()
+        # self.grapView.updateScene()
+        self.grapView.update()
+        self.grapView.repaint()
+
+        self.pendulum_item.setPos(self.pendulum_item.x()+10,
                                   self.pendulum_item.y())
-        self.pendulum_item.setRotation(self.pendulum_item.rotation()+10)
-        self.car_item.setPos(self.car_item.x(), self.car_item.y())
-        print(self.pendulum_item.x(),self.pendulum_item.y())
-        print(self.pendulum_item.rotation())
-        print(self.car_item.x(), self.car_item.y())
+        # self.pendulum_item.setRotation(self.pendulum_item.rotation()+10)
+        self.car_item.setPos(self.car_item.x()+10, self.car_item.y())
 
         ui.pushButton.setText("   开始")
         self.ui.lineEdit.setText("0.5")
@@ -172,19 +177,17 @@ class Unite():
 
     # 动画部分
     def drawInit(self):
-        grapView = ui.graphicsView
-        scene = QtWidgets.QGraphicsScene()
         width = 551
         height = 551
-        grapView.setScene(scene)
-        scene.setSceneRect(0, 0, width, height)
+        self.grapView.setScene(self.scene)
+        self.scene.setSceneRect(0, 0, width, height)
 
         cross_bar_w = 551
         cross_bar_h = 10
         cross_bar = QPixmap("./res/cross_bar.png").scaled(
             cross_bar_w, cross_bar_h)
         self.cross_bar_item = QGraphicsPixmapItem(cross_bar)  # cross_bar
-        scene.addItem(self.cross_bar_item)
+        self.scene.addItem(self.cross_bar_item)
         self.cross_bar_item.setPos(QPointF(0, height * 2 / 3))
         self.cross_bar_item.setZValue(0)
 
@@ -194,7 +197,7 @@ class Unite():
         self.car_y_offset = 0 - car_h
         car = QPixmap("./res/car.png").scaled(car_w, car_h)
         self.car_item = QGraphicsPixmapItem(car)  # car
-        scene.addItem(self.car_item)
+        self.scene.addItem(self.car_item)
         self.car_item.setPos(
             QPointF(width / 2 - car_w / 2,
                     height * 2 / 3 - car_h / 2 + cross_bar_h / 2))
@@ -207,8 +210,7 @@ class Unite():
         self.pendulum = QPixmap("./res/pendulum.png").scaled(
             pendulum_w, pendulum_h)
         self.pendulum_item = QGraphicsPixmapItem(self.pendulum)  # pendulum
-        scene.addItem(self.pendulum_item)
-        print(self.pendulum_item)
+        self.scene.addItem(self.pendulum_item)
         self.pendulum_item.setPos(
             QPointF(width / 2 - pendulum_w / 2,
                     self.car_item.y() - pendulum_h + pendulum_w))
@@ -221,33 +223,36 @@ class Unite():
         width = 551
         height = 551
         result = self.ctrl.get_ang_dis()
-        self.animation(result[1] + width / 2, result[0])
-        print(self.pendulum_item)
-        # print(threading.enumerate())
-
-    def animation(self, x, a):
-        print("animation")
+        # t= threading.Thread(target=self.animation,args=(result[1] + width / 2, result[0]))
+        # t.start()
+        # t.join()
+        x=result[1] + width / 2
+        a=result[0]
         # self.pendulum_item.setPos(x + self.pendulum_x_offset,
         #                           self.pendulum_item.y())
         self.pendulum_item.setRotation(a)
         # self.car_item.setPos(x + self.car_x_offset, self.car_item.y())
+        # self.animation(result[1] + width / 2, result[0])
+        print(threading.enumerate())
 
-        # self.pendulum_anim.set_pos(x + self.pendulum_x_offset,
-        #                            self.pendulum_item.y())
-        # self.pendulum_anim.set_rotation(a)
+    def animation(self, x, a):
+        print("animation")
+        self.pendulum_item.setPos(x + self.pendulum_x_offset,
+                                  self.pendulum_item.y())
+        self.pendulum_item.setRotation(a)
+        self.car_item.setPos(x + self.car_x_offset, self.car_item.y())
 
-        # self.car_anim.set_pos(x + self.car_x_offset, self.car_item.y())
 
     def __test(self):
         pass
 
-def test(unite):
-    for x in range(20):
-        # unite.pendulum_item.setPos(x+10,
-        #                             158.33333333333331)
-        unite.pendulum_item.setRotation(x)
-        # unite.car_item.setPos(x+10, 349.3333333333333)
-        time.sleep(0.5)
+# def test(unite):
+#     for x in range(20):
+#         # unite.pendulum_item.setPos(x+10,
+#         #                             158.33333333333331)
+#         unite.pendulum_item.setRotation(x)
+#         # unite.car_item.setPos(x+10, 349.3333333333333)
+#         time.sleep(0.5)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -259,7 +264,7 @@ if __name__ == '__main__':
     ui.pushButton_2.clicked.connect(unite.reset)
     mainWindow.show()
 
-    # t= threading.Thread(target=test,args=(unite,))#创建线程
+    # t= threading.Thread(target=mainWindow.show,args=())#创建线程
     # t.setDaemon(True)
     # t.start()
     # t.join()

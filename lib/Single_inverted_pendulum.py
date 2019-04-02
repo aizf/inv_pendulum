@@ -88,9 +88,9 @@ class Single_inverted_pendulum(threading.Thread):
 
             #决定何时启动本次绘制
             c=clock()-self.clock_start
-            if c<2:
+            if c<0.02:
                 #决定先睡一会
-                sleep(2-c)
+                sleep(0.02-c)
             self.clock_start=clock()
             #调用外部的程序
             self.fn()
