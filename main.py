@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import *
 
 from lib import Single_inverted_pendulum
 from res import Ui_Dialog
+import threading
+import time
 
 cgitb.enable(format='text')
 
@@ -15,25 +17,24 @@ cgitb.enable(format='text')
 class Animation(QObject):
     def __init__(self, item):
         super().__init__()
-        
         self.item = item
-        self.dur = 1000
+        self.dur = 1
         self.anim_move = QPropertyAnimation()
         self.anim_rotate = QPropertyAnimation()
 
-    def move(self, x,y):  # p:QPointF(250, 20)
+    def move_A(self, x, y):  # p:QPointF(250, 20)
         self.anim_move = QPropertyAnimation(self, b'pos')
         self.anim_move.setDuration(self.dur)
         self.anim_move.setStartValue(QPointF(self.item.x(), self.item.y()))
         self.anim_move.setEndValue(QPointF(x, y))
 
-    def rotate(self, a):  # a:360
+    def rotate_A(self, a):  # a:360
         self.anim_rotate = QPropertyAnimation(self, b'rotation')
         self.anim_rotate.setDuration(self.dur)
         self.anim_rotate.setStartValue(QPointF(self.item.rotation(), 1))
         self.anim_rotate.setEndValue(QPointF(a, 1))
 
-    def start(self, isM=False, isR=False):
+    def start_A(self, isM=False, isR=False):
         if isM:
             self.anim_move.start()
         if isR:
@@ -45,14 +46,18 @@ class Animation(QObject):
     def __set_rotation(self, angle):
         self.item.setRotation(angle.x())  # 旋转度数
 
-    pos = pyqtProperty(QPointF, fset=__set_pos)
-    rotation = pyqtProperty(QPointF, fset=__set_rotation)
+    def set_pos(self, x, y):
+        self.item.setPos(QPointF(x, y))  # 位置
+
+    def set_rotation(self, a):
+        self.item.setRotation(a)  # 旋转度数
+
+    pos = pyqtProperty(QPointF, fset=set_pos)
+    rotation = pyqtProperty(QPointF, fset=set_rotation)
 
 
 class Unite():
     def __init__(self, ui):
-        self.ang=0
-        self.dis=0
         self.ui = ui
         self.ctrl = Single_inverted_pendulum(self.fun_timer)
 
@@ -70,6 +75,7 @@ class Unite():
 
         self.reseted = True
         self.pressed = False
+        self.ctrl.setDaemon(True)
         self.ctrl.start()
         self.ctrl.pause()
 
@@ -96,8 +102,18 @@ class Unite():
 
     def reset(self):
         self.reseted = True
-        self.ctrl.reset()
-        self.ctrl.pause()
+        # self.ctrl.reset()
+        # self.ctrl.pause()
+        self.ctrl.stop()
+
+        self.pendulum_item.setPos(self.pendulum_item.x(),
+                                  self.pendulum_item.y())
+        self.pendulum_item.setRotation(self.pendulum_item.rotation()+10)
+        self.car_item.setPos(self.car_item.x(), self.car_item.y())
+        print(self.pendulum_item.x(),self.pendulum_item.y())
+        print(self.pendulum_item.rotation())
+        print(self.car_item.x(), self.car_item.y())
+
         ui.pushButton.setText("   开始")
         self.ui.lineEdit.setText("0.5")
         self.ui.lineEdit_2.setText("0.2")
@@ -106,6 +122,7 @@ class Unite():
         self.ui.lineEdit_5.setText("100")
         self.ui.lineEdit_6.setText("1")
         self.ui.lineEdit_7.setText("30")
+        print(threading.enumerate())
 
     def firstButton(self):
         if self.reseted:
@@ -173,55 +190,64 @@ class Unite():
 
         car_w = 70
         car_h = 46
-        self.car_x_offset=0-car_w/2
-        self.car_y_offset=0-car_h
+        self.car_x_offset = 0 - car_w / 2
+        self.car_y_offset = 0 - car_h
         car = QPixmap("./res/car.png").scaled(car_w, car_h)
         self.car_item = QGraphicsPixmapItem(car)  # car
         scene.addItem(self.car_item)
         self.car_item.setPos(
             QPointF(width / 2 - car_w / 2,
                     height * 2 / 3 - car_h / 2 + cross_bar_h / 2))
-        self.car_item.setZValue(2)
+        self.car_item.setZValue(200)
 
         pendulum_w = 10
         pendulum_h = 201
-        self.pendulum_x_offset=0-pendulum_w/2
-        self.pendulum_y_offset=0-pendulum_h
+        self.pendulum_x_offset = 0 - pendulum_w / 2
+        self.pendulum_y_offset = 0 - pendulum_h
         self.pendulum = QPixmap("./res/pendulum.png").scaled(
             pendulum_w, pendulum_h)
         self.pendulum_item = QGraphicsPixmapItem(self.pendulum)  # pendulum
         scene.addItem(self.pendulum_item)
+        print(self.pendulum_item)
         self.pendulum_item.setPos(
             QPointF(width / 2 - pendulum_w / 2,
-                    self.car_item.y() - pendulum_h))
+                    self.car_item.y() - pendulum_h + pendulum_w))
         self.pendulum_item.setTransformOriginPoint(pendulum_w / 2,
                                                    pendulum_h)  # 设置旋转中心
-        self.pendulum_item.setZValue(1)
+        self.pendulum_item.setZValue(100)
 
     def fun_timer(self):
-        self.ang+=1
-        self.dis+=0.1
-        # result=self.ctrl.get_ang_dis()
-        # print(result[1],result[0])
-        # self.animation(result[1],result[0])
-        self.animation(self.dis,self.ang)
+        # pass
+        width = 551
+        height = 551
+        result = self.ctrl.get_ang_dis()
+        self.animation(result[1] + width / 2, result[0])
+        print(self.pendulum_item)
+        # print(threading.enumerate())
 
-
-    def animation(self,x,a):
+    def animation(self, x, a):
         print("animation")
-        
-        self.pendulum_anim.dur=1
-        self.pendulum_anim.move(x+self.pendulum_x_offset, self.pendulum_item.y())
-        # self.pendulum_anim.rotate(a)
-        self.pendulum_anim.start(isM=True)
+        # self.pendulum_item.setPos(x + self.pendulum_x_offset,
+        #                           self.pendulum_item.y())
+        self.pendulum_item.setRotation(a)
+        # self.car_item.setPos(x + self.car_x_offset, self.car_item.y())
 
-        self.car_anim.dur = 2
-        self.car_anim.move(x+self.car_x_offset, self.car_item.y())
-        self.car_anim.start(isM=True)
+        # self.pendulum_anim.set_pos(x + self.pendulum_x_offset,
+        #                            self.pendulum_item.y())
+        # self.pendulum_anim.set_rotation(a)
+
+        # self.car_anim.set_pos(x + self.car_x_offset, self.car_item.y())
 
     def __test(self):
         pass
 
+def test(unite):
+    for x in range(20):
+        # unite.pendulum_item.setPos(x+10,
+        #                             158.33333333333331)
+        unite.pendulum_item.setRotation(x)
+        # unite.car_item.setPos(x+10, 349.3333333333333)
+        time.sleep(0.5)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -231,13 +257,13 @@ if __name__ == '__main__':
     unite = Unite(ui)
     ui.pushButton.clicked.connect(unite.firstButton)
     ui.pushButton_2.clicked.connect(unite.reset)
-
-
-
     mainWindow.show()
-    # def fun_timer():
-    #     result = car.get_ang_dis()
-       
-    
+
+    # t= threading.Thread(target=test,args=(unite,))#创建线程
+    # t.setDaemon(True)
+    # t.start()
+    # t.join()
+    # unite.pendulum_item.setRotation(20)
+    # QtWidgets.QGraphicsScene().
 
     sys.exit(app.exec_())

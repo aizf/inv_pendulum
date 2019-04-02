@@ -36,7 +36,7 @@ class Single_inverted_pendulum(threading.Thread):
         num = int(math.ceil((stop - start) / step))
         t = np.linspace(start, stop, num, endpoint=False)
         pulse_num = int(math.floor(during / step))
-        pulse_value = 1 / during*50
+        pulse_value = 1 / during*50     # 调冲激
         u = [pulse_value] * pulse_num + [0] * (len(t) - pulse_num)
         return u, t
     def set(self,mCart=0.5,mPend=0.2,L=0.6,b=0.1,Kp=100,Ki=1,Kd=30):
@@ -88,9 +88,9 @@ class Single_inverted_pendulum(threading.Thread):
 
             #决定何时启动本次绘制
             c=clock()-self.clock_start
-            if c<0.02:
+            if c<2:
                 #决定先睡一会
-                sleep(0.02-c)
+                sleep(2-c)
             self.clock_start=clock()
             #调用外部的程序
             self.fn()
@@ -100,7 +100,6 @@ class Single_inverted_pendulum(threading.Thread):
 
     def resume(self):
         self.__flag.set()    # 设置为True, 让线程停止阻塞
-        self.set()  # 前端需要传递参数，并做非0等判断
     def stop(self):
         '''
         程序退出时候调用
